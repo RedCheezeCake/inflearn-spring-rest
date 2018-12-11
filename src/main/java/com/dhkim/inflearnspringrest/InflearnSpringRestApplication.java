@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class InflearnSpringRestApplication {
 
 	public static void main(String[] args) {
+
 		SpringApplication.run(InflearnSpringRestApplication.class, args);
 	}
 }
