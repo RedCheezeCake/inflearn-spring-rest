@@ -39,6 +39,32 @@ public class EventControllerTests {
     @Test
     public void createEvent() throws Exception {
         // 데이터 생성
+        EventDto event = EventDto.builder()
+                .name("Spring")
+                .description("REST API development with Spring")
+                .beginEnrollmentDateTime(LocalDateTime.of(2018,12,12,20,00))
+                .closeEnrollmentDateTime(LocalDateTime.of(2018,12,13,20,00))
+                .beginEventDateTime(LocalDateTime.of(2018,12,14,20,00))
+                .endEventDateTime(LocalDateTime.of(2018,12,15,20,00))
+                .basePrice(100)
+                .maxPrice(200)
+                .limitOfEnrollment(100)
+                .location("가능역")
+                .build();
+
+        // 201 반환 확인
+        mockMvc.perform(post("/api/events")
+                    .contentType(MediaType.APPLICATION_JSON_UTF8)
+                    .accept(MediaTypes.HAL_JSON_UTF8)
+                    .content(objectMapper.writeValueAsString(event))) // contentType = json
+                .andDo(print())
+                .andExpect(jsonPath("id").value(Matchers.not(100))) // 생성되면 안되는 값
+                .andExpect(status().isCreated()); // status 201
+    }
+
+    @Test
+    public void badRequest() throws Exception {
+        // 데이터 생성
         Event event = Event.builder()
                 .id(100)        // db에서 알아서 입력해주기를 기대하는 값
                 .name("Spring")
@@ -55,15 +81,12 @@ public class EventControllerTests {
                 .offline(false)     // location에 따라 계산되는 값
                 .build();
 
-        // 201 반환 확인
+        // 400 반환 확인
         mockMvc.perform(post("/api/events")
-                    .contentType(MediaType.APPLICATION_JSON_UTF8)
-                    .accept(MediaTypes.HAL_JSON_UTF8)
-                    .content(objectMapper.writeValueAsString(event))) // contentType = json
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .accept(MediaTypes.HAL_JSON_UTF8)
+                .content(objectMapper.writeValueAsString(event))) // contentType = json
                 .andDo(print())
-                .andExpect(jsonPath("id").value(Matchers.not(100))) // 생성되면 안되는 값
-                .andExpect(status().isCreated()); // status 201
+                .andExpect(status().isBadRequest()); // status 400
     }
-
-
 }
