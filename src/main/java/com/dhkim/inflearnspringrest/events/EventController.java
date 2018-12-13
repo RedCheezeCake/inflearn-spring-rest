@@ -5,10 +5,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import javax.validation.Valid;
 import java.net.URI;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
@@ -24,7 +26,11 @@ public class EventController {
     ModelMapper modelMapper;
 
     @PostMapping
-    public ResponseEntity createEvent(@RequestBody EventDto eventDto) {
+    public ResponseEntity createEvent(@RequestBody @Valid EventDto eventDto, Errors errors) {
+        // @Valid 체크 후 에러 처리
+        if(errors.hasErrors()) {
+            return ResponseEntity.badRequest().build();
+        }
         // ModelMapper 사용하지 않는다면 일일히 옮겨줘야 됌!
 //        Event event = Event.builder()
 //                .name(eventDto.getName())
