@@ -25,12 +25,22 @@ public class EventController {
     @Autowired
     ModelMapper modelMapper;
 
+    @Autowired
+    EventValidator eventValidator;
+
     @PostMapping
     public ResponseEntity createEvent(@RequestBody @Valid EventDto eventDto, Errors errors) {
         // @Valid 체크 후 에러 처리
         if(errors.hasErrors()) {
             return ResponseEntity.badRequest().build();
         }
+
+        // custom validator
+        eventValidator.validate(eventDto, errors);
+        if(errors.hasErrors()) {
+            return ResponseEntity.badRequest().build();
+        }
+
         // ModelMapper 사용하지 않는다면 일일히 옮겨줘야 됌!
 //        Event event = Event.builder()
 //                .name(eventDto.getName())
