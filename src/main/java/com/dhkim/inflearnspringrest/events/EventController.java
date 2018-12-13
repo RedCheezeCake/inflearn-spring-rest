@@ -1,5 +1,6 @@
 package com.dhkim.inflearnspringrest.events;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.ResponseEntity;
@@ -19,10 +20,19 @@ public class EventController {
     @Autowired
     EventRepository eventRepository;
 
-    @PostMapping
-    public ResponseEntity createEvent(@RequestBody Event event) {
-        Event newEvent = eventRepository.save(event);
+    @Autowired
+    ModelMapper modelMapper;
 
+    @PostMapping
+    public ResponseEntity createEvent(@RequestBody EventDto eventDto) {
+        // ModelMapper 사용하지 않는다면 일일히 옮겨줘야 됌!
+//        Event event = Event.builder()
+//                .name(eventDto.getName())
+//                .description(eventDto.getDescription())
+//                .build();
+        // modelMapper로 맵핑
+        Event event = modelMapper.map(eventDto, Event.class);
+        Event newEvent = eventRepository.save(event);
         URI createURI = linkTo(EventController.class).slash(newEvent.getId()).toUri();
         return ResponseEntity.created(createURI).body(event);
     }

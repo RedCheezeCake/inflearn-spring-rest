@@ -7,7 +7,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class EventTest {
 
-    // 빌더를 확인해보자
+    // lombok 빌더를 확인해보자
     @Test
     public void builder() {
         Event event = Event.builder()

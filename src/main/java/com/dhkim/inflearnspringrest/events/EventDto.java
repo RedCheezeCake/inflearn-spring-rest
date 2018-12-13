@@ -1,18 +1,15 @@
 package com.dhkim.inflearnspringrest.events;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
 import java.time.LocalDateTime;
 
-// AllArgsConstructor 와 NoArgsConstructor 로 기본 생성자 자동 생성
-@Builder @AllArgsConstructor @NoArgsConstructor
-@Getter @Setter @EqualsAndHashCode(of = "id")
-@Entity
-public class Event {
+@Data @Builder @AllArgsConstructor @NoArgsConstructor
+public class EventDto {
 
-    @Id @GeneratedValue
-    private Integer id;
     private String name;
     private String description;
     private LocalDateTime beginEnrollmentDateTime;
@@ -23,8 +20,5 @@ public class Event {
     private int basePrice; // optional
     private int maxPrice;
     private int limitOfEnrollment;
-    private boolean offline;
-    private boolean free;
-    @Enumerated(value = EnumType.STRING)    //ORIDNAL : 값 순서에 따라 0, 1, ...
-    private EventStatus eventStatus = EventStatus.DRAFT;
+
 }
