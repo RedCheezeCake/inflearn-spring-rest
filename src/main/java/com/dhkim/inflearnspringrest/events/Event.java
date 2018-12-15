@@ -27,4 +27,18 @@ public class Event {
     private boolean free;
     @Enumerated(value = EnumType.STRING)    //ORIDNAL : 값 순서에 따라 0, 1, ...
     private EventStatus eventStatus = EventStatus.DRAFT;
+
+    public void update() {
+        if(basePrice == 0 && maxPrice == 0) {
+            free = true;
+        } else {
+            free = false;
+        }
+
+        if(location == null || location.isEmpty()) {
+            offline = false;
+        } else {
+            offline = true;
+        }
+    }
 }

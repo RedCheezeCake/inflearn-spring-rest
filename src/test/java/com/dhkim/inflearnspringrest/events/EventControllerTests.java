@@ -59,6 +59,8 @@ public class EventControllerTests {
                     .content(objectMapper.writeValueAsString(event))) // contentType = json
                 .andDo(print())
                 .andExpect(jsonPath("id").value(Matchers.not(100))) // 생성되면 안되는 값
+                .andExpect(jsonPath("free").value(false))
+                .andExpect(jsonPath("offline").value(true))
                 .andExpect(status().isCreated()); // status 201
     }
 
