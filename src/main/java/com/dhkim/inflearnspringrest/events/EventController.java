@@ -2,6 +2,7 @@ package com.dhkim.inflearnspringrest.events;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.Link;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.mvc.ControllerLinkBuilder;
 import org.springframework.http.ResponseEntity;
@@ -32,13 +33,13 @@ public class EventController {
     @PostMapping
     public ResponseEntity createEvent(@RequestBody @Valid EventDto eventDto, Errors errors) {
         // @Valid 체크 후 에러 처리
-        if(errors.hasErrors()) {
+        if (errors.hasErrors()) {
             return ResponseEntity.badRequest().body(errors);
         }
 
         // custom validator
         eventValidator.validate(eventDto, errors);
-        if(errors.hasErrors()) {
+        if (errors.hasErrors()) {
             return ResponseEntity.badRequest().body(errors);
         }
 
@@ -58,6 +59,8 @@ public class EventController {
 //        eventResource.add(selfLinkBuilder.withSelfRel());   // EventResource 생성할 때 붙힐 수 있음
         eventResource.add(linkTo(EventController.class).withRel("query-events"));
         eventResource.add(selfLinkBuilder.withRel("update-event")); // another method with self rel
+        eventResource.add(new Link("/docs/index.html#resources-events-create").withRel("profile"));
+
         return ResponseEntity.created(createURI).body(eventResource);
     }
 }

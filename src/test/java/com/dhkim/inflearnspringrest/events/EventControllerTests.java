@@ -70,15 +70,16 @@ public class EventControllerTests {
                 .andExpect(jsonPath("free").value(false))
                 .andExpect(jsonPath("offline").value(true))
                 .andExpect(status().isCreated()) // status 201
-                .andExpect(jsonPath("_links.self").exists())
-                .andExpect(jsonPath("_links.query-events").exists())
-                .andExpect(jsonPath("_links.update-event").exists())
+//                .andExpect(jsonPath("_links.self").exists())      // 문서화에서 테스트 실행
+//                .andExpect(jsonPath("_links.query-events").exists())
+//                .andExpect(jsonPath("_links.update-event").exists())
                 .andDo(document("create-event",
                         links(
                                 linkWithRel("self").description("link to self"),
                                 linkWithRel("query-events").description("link to query events"),
-                                linkWithRel("update-event").description("link to update event")
-                        ),
+                                linkWithRel("update-event").description("link to update event"),
+                                linkWithRel("profile").description("link to profile")
+                                ),
                         requestHeaders(
                                 headerWithName(HttpHeaders.ACCEPT).description("accept header"),
                                 headerWithName(HttpHeaders.CONTENT_TYPE).description("contents type header")
