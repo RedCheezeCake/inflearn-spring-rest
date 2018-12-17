@@ -1,5 +1,6 @@
 package com.dhkim.inflearnspringrest.events;
 
+import com.dhkim.inflearnspringrest.common.ErrorResource;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Link;
@@ -34,13 +35,13 @@ public class EventController {
     public ResponseEntity createEvent(@RequestBody @Valid EventDto eventDto, Errors errors) {
         // @Valid 체크 후 에러 처리
         if (errors.hasErrors()) {
-            return ResponseEntity.badRequest().body(errors);
+            return badRequest(errors);
         }
 
         // custom validator
         eventValidator.validate(eventDto, errors);
         if (errors.hasErrors()) {
-            return ResponseEntity.badRequest().body(errors);
+            return badRequest(errors);
         }
 
         // ModelMapper 사용하지 않는다면 일일히 옮겨줘야 됌!
@@ -62,5 +63,9 @@ public class EventController {
         eventResource.add(new Link("/docs/index.html#resources-events-create").withRel("profile"));
 
         return ResponseEntity.created(createURI).body(eventResource);
+    }
+
+    private ResponseEntity<ErrorResource> badRequest(Errors errors) {
+        return ResponseEntity.badRequest().body(new ErrorResource(errors));
     }
 }
