@@ -3,6 +3,7 @@ package com.dhkim.inflearnspringrest.events;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.MediaTypes;
+import org.springframework.hateoas.mvc.ControllerLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.Errors;
@@ -46,11 +47,17 @@ public class EventController {
 //                .name(eventDto.getName())
 //                .description(eventDto.getDescription())
 //                .build();
-        // modelMapper로 맵핑
+        // modelMapper 로 맵핑
         Event event = modelMapper.map(eventDto, Event.class);
         event.update();
         Event newEvent = eventRepository.save(event);
-        URI createURI = linkTo(EventController.class).slash(newEvent.getId()).toUri();
-        return ResponseEntity.created(createURI).body(event);
+
+        ControllerLinkBuilder selfLinkBuilder = linkTo(EventController.class).slash(newEvent.getId());
+        URI createURI = selfLinkBuilder.toUri();
+        EventResource eventResource = new EventResource(event); // EventResourceNotRef 로 적용해도 동일
+//        eventResource.add(selfLinkBuilder.withSelfRel());   // EventResource 생성할 때 붙힐 수 있음
+        eventResource.add(linkTo(EventController.class).withRel("query-events"));
+        eventResource.add(selfLinkBuilder.withRel("update-event")); // another method with self rel
+        return ResponseEntity.created(createURI).body(eventResource);
     }
 }

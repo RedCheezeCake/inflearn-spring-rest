@@ -61,7 +61,11 @@ public class EventControllerTests {
                 .andExpect(jsonPath("id").value(Matchers.not(100))) // 생성되면 안되는 값
                 .andExpect(jsonPath("free").value(false))
                 .andExpect(jsonPath("offline").value(true))
-                .andExpect(status().isCreated()); // status 201
+                .andExpect(status().isCreated()) // status 201
+                .andExpect(jsonPath("_links.self").exists())
+                .andExpect(jsonPath("_links.query-events").exists())
+                .andExpect(jsonPath("_links.update-event").exists())
+        ;
     }
 
     @Test
