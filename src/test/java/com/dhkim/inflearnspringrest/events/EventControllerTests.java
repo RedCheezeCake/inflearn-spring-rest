@@ -204,7 +204,7 @@ public class EventControllerTests {
         // Given
         IntStream.range(0, 40).forEach(this::generateEvent);
 
-        // When
+        // When & Then
         this.mockMvc.perform(get("/api/events")
                 .param("page", "1")
                 .param("size", "10")
@@ -215,12 +215,40 @@ public class EventControllerTests {
                 .andExpect(jsonPath("_links.next").exists())        // pageable 의 결과로 붙는 link 정보
                 .andExpect(jsonPath("page.size").exists())          // pageable 의 결과로 붙는 page 정보
                 .andExpect(jsonPath("_links.profile").exists())     // self-description
-                .andDo(document("resources-events-list"))           // 문서화
-                // TODO 문서화
+                .andDo(document("getEventList"))           // 문서화
+        // TODO 문서화
         ;
     }
 
-    private void generateEvent(int i) {
+    // 존재하지않는 이벤트 하나 조회
+    @Test
+    public void getEventNotExist() throws Exception {
+        // When & Then
+        this.mockMvc.perform(get("/api/events/404"))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+        ;
+    }
+
+    // 존재하는 이벤트 하나 조회
+    @Test
+    public void getEvent() throws Exception {
+        // Given
+        Event event = generateEvent(100);
+
+        // When & Then
+        this.mockMvc.perform(get("/api/events/{id}", event.getId()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("name").value(event.getName()))   // 정확하게 조회되는지 확인
+                .andExpect(jsonPath("_links.self").exists())        // HATEOAS
+                .andExpect(jsonPath("_links.profile").exists())     // self-description
+                .andDo(document("getEvent"))        // 문서화
+        // TODO 문서화
+        ;
+    }
+
+    private Event generateEvent(int i) {
         Event event = Event.builder()
                 .name("Test Event " + i)
                 .description("this event is for testing")
@@ -234,6 +262,6 @@ public class EventControllerTests {
                 .location("가능역")
                 .build();
 
-        this.eventRepository.save(event);
+        return this.eventRepository.save(event);
     }
 }
