@@ -18,6 +18,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.util.stream.IntStream;
 
 import static org.springframework.restdocs.headers.HeaderDocumentation.*;
 import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.linkWithRel;
@@ -25,6 +26,7 @@ import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.li
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -43,6 +45,9 @@ public class EventControllerTests {
     @Autowired
     ObjectMapper objectMapper;
 
+    @Autowired
+    EventRepository eventRepository;
+
 //    @MockBean
 //    EventRepository eventRepository;    // WebMvcTest 테스트이기 때문에 JPA 빈이 호출이 안됨
 
@@ -52,10 +57,10 @@ public class EventControllerTests {
         EventDto event = EventDto.builder()
                 .name("Spring")
                 .description("REST API development with Spring")
-                .beginEnrollmentDateTime(LocalDateTime.of(2018,12,12,20,00))
-                .closeEnrollmentDateTime(LocalDateTime.of(2018,12,13,20,00))
-                .beginEventDateTime(LocalDateTime.of(2018,12,14,20,00))
-                .endEventDateTime(LocalDateTime.of(2018,12,15,20,00))
+                .beginEnrollmentDateTime(LocalDateTime.of(2018, 12, 12, 20, 00))
+                .closeEnrollmentDateTime(LocalDateTime.of(2018, 12, 13, 20, 00))
+                .beginEventDateTime(LocalDateTime.of(2018, 12, 14, 20, 00))
+                .endEventDateTime(LocalDateTime.of(2018, 12, 15, 20, 00))
                 .basePrice(100)
                 .maxPrice(200)
                 .limitOfEnrollment(100)
@@ -64,9 +69,9 @@ public class EventControllerTests {
 
         // 201 반환 확인
         mockMvc.perform(post("/api/events")
-                    .contentType(MediaType.APPLICATION_JSON_UTF8)
-                    .accept(MediaTypes.HAL_JSON_UTF8)
-                    .content(objectMapper.writeValueAsString(event))) // contentType = json
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .accept(MediaTypes.HAL_JSON_UTF8)
+                .content(objectMapper.writeValueAsString(event))) // contentType = json
                 .andDo(print())
                 .andExpect(jsonPath("id").value(Matchers.not(100))) // 생성되면 안되는 값
                 .andExpect(jsonPath("free").value(false))
@@ -81,7 +86,7 @@ public class EventControllerTests {
                                 linkWithRel("query-events").description("link to query events"),
                                 linkWithRel("update-event").description("link to update event"),
                                 linkWithRel("profile").description("link to profile")
-                                ),
+                        ),
                         requestHeaders(
                                 headerWithName(HttpHeaders.ACCEPT).description("accept header"),
                                 headerWithName(HttpHeaders.CONTENT_TYPE).description("contents type header")
@@ -129,10 +134,10 @@ public class EventControllerTests {
                 .id(100)        // db에서 알아서 입력해주기를 기대하는 값
                 .name("Spring")
                 .description("REST API development with Spring")
-                .beginEnrollmentDateTime(LocalDateTime.of(2018,12,12,20,00))
-                .closeEnrollmentDateTime(LocalDateTime.of(2018,12,13,20,00))
-                .beginEventDateTime(LocalDateTime.of(2018,12,14,20,00))
-                .endEventDateTime(LocalDateTime.of(2018,12,15,20,00))
+                .beginEnrollmentDateTime(LocalDateTime.of(2018, 12, 12, 20, 00))
+                .closeEnrollmentDateTime(LocalDateTime.of(2018, 12, 13, 20, 00))
+                .beginEventDateTime(LocalDateTime.of(2018, 12, 14, 20, 00))
+                .endEventDateTime(LocalDateTime.of(2018, 12, 15, 20, 00))
                 .basePrice(100)
                 .maxPrice(200)
                 .free(true)         // price에 따라 계산되는 값
@@ -167,10 +172,10 @@ public class EventControllerTests {
         EventDto eventDto = EventDto.builder()
                 .name("Spring")
                 .description("REST API development with Spring")
-                .beginEnrollmentDateTime(LocalDateTime.of(2018,12,12,20,00))
-                .closeEnrollmentDateTime(LocalDateTime.of(2018,12,13,20,00))
-                .beginEventDateTime(LocalDateTime.of(2018,12,4,20,00))  // 등록 날짜보다 빠름
-                .endEventDateTime(LocalDateTime.of(2018,12,5,20,00))
+                .beginEnrollmentDateTime(LocalDateTime.of(2018, 12, 12, 20, 00))
+                .closeEnrollmentDateTime(LocalDateTime.of(2018, 12, 13, 20, 00))
+                .beginEventDateTime(LocalDateTime.of(2018, 12, 4, 20, 00))  // 등록 날짜보다 빠름
+                .endEventDateTime(LocalDateTime.of(2018, 12, 5, 20, 00))
                 .basePrice(10000)           // maxPrice 보다 큼
                 .maxPrice(200)
                 .limitOfEnrollment(100)
@@ -187,5 +192,48 @@ public class EventControllerTests {
                 .andExpect(jsonPath("content[0].code").exists())
                 .andExpect(jsonPath("_links.index").exists())
         ;
+    }
+
+    // --------------------------------------------------------
+    // 이벤트 조회 부분
+    // --------------------------------------------------------
+
+    // 이벤트 10개씩 3페이지 조회해서 2번째 페이지 응답
+    @Test
+    public void getEventList() throws Exception {
+        // Given
+        IntStream.range(0, 40).forEach(this::generateEvent);
+
+        // When
+        this.mockMvc.perform(get("/api/events")
+                .param("page", "1")
+                .param("size", "10")
+                .param("sort", "name,DESC"))
+                .andDo(print())
+                .andExpect(jsonPath("_embedded.eventResourceList[0].id").exists())              // 출력된 이벤트 중 하나의 id
+                .andExpect(jsonPath("_embedded.eventResourceList[0]._links.self").exists())     // 출력된 이벤트 중 하나의 self link (HATEOAS)
+                .andExpect(jsonPath("_links.next").exists())        // pageable 의 결과로 붙는 link 정보
+                .andExpect(jsonPath("page.size").exists())          // pageable 의 결과로 붙는 page 정보
+                .andExpect(jsonPath("_links.profile").exists())     // self-description
+                .andDo(document("resources-events-list"))           // 문서화
+                // TODO 문서화
+        ;
+    }
+
+    private void generateEvent(int i) {
+        Event event = Event.builder()
+                .name("Test Event " + i)
+                .description("this event is for testing")
+                .beginEnrollmentDateTime(LocalDateTime.of(2018, 12, 12, 20, 00))
+                .closeEnrollmentDateTime(LocalDateTime.of(2018, 12, 13, 20, 00))
+                .beginEventDateTime(LocalDateTime.of(2018, 12, 14, 20, 00))
+                .endEventDateTime(LocalDateTime.of(2018, 12, 15, 20, 00))
+                .basePrice(100)
+                .maxPrice(200)
+                .limitOfEnrollment(100)
+                .location("가능역")
+                .build();
+
+        this.eventRepository.save(event);
     }
 }

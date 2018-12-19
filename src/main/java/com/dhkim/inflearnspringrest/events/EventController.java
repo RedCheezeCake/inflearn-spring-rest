@@ -3,18 +3,24 @@ package com.dhkim.inflearnspringrest.events;
 import com.dhkim.inflearnspringrest.common.ErrorResource;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.MediaTypes;
+import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.mvc.ControllerLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.Errors;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.validation.Valid;
 import java.net.URI;
+import java.util.List;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 
@@ -64,6 +70,16 @@ public class EventController {
 
         return ResponseEntity.created(createURI).body(eventResource);
     }
+
+    @GetMapping
+    public ResponseEntity getEventList(Pageable pageable, PagedResourcesAssembler<Event> assembler) {
+        Page<Event> eventPage = this.eventRepository.findAll(pageable);
+        PagedResources pagedResources = assembler.toResource(eventPage, entity -> new EventResource(entity));
+        pagedResources.add(new Link("/docs/index.html#resources-events-list").withRel("profile"));
+
+        return ResponseEntity.ok(pagedResources);
+    }
+
 
     private ResponseEntity<ErrorResource> badRequest(Errors errors) {
         return ResponseEntity.badRequest().body(new ErrorResource(errors));
