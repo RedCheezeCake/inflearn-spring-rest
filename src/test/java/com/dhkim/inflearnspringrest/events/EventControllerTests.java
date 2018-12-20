@@ -1,22 +1,12 @@
 package com.dhkim.inflearnspringrest.events;
 
-import com.dhkim.inflearnspringrest.common.RestDocsConfiguration;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.dhkim.inflearnspringrest.common.BaseControllerTest;
 import org.hamcrest.Matchers;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.stream.IntStream;
@@ -31,25 +21,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureRestDocs
-@Import(RestDocsConfiguration.class)
-@ActiveProfiles("test")
-public class EventControllerTests {
 
-    @Autowired
-    MockMvc mockMvc; // 단위 테스트보단 크지만 웹서버를 구동안해서 빠름
-
-    @Autowired
-    ObjectMapper objectMapper;
+public class EventControllerTests extends BaseControllerTest {
 
     @Autowired
     EventRepository eventRepository;
 
-    @Autowired
-    ModelMapper modelMapper;
 
 //    @MockBean
 //    EventRepository eventRepository;    // WebMvcTest 테스트이기 때문에 JPA 빈이 호출이 안됨
@@ -352,7 +329,7 @@ public class EventControllerTests {
                 .andExpect(jsonPath("_links.self").exists())            // HATEOAS
                 .andExpect(jsonPath("_links.profile").exists())         // self-description
                 .andDo(document("updateEvent"))     // 문서화
-                // TODO 문서화
+        // TODO 문서화
         ;
 
     }
