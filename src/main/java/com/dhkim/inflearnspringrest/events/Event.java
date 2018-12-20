@@ -1,5 +1,6 @@
 package com.dhkim.inflearnspringrest.events;
 
+import com.dhkim.inflearnspringrest.accounts.Account;
 import lombok.*;
 
 import javax.persistence.*;
@@ -27,6 +28,8 @@ public class Event {
     private boolean free;
     @Enumerated(value = EnumType.STRING)    //ORIDNAL : 값 순서에 따라 0, 1, ...
     private EventStatus eventStatus = EventStatus.DRAFT;
+    @ManyToOne  // 단방향 참조
+    private Account manager;
 
     public void update() {
         if(basePrice == 0 && maxPrice == 0) {
