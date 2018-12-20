@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.net.URI;
-import java.util.List;
 import java.util.Optional;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
@@ -87,6 +86,32 @@ public class EventController {
         Event event = eventOptional.get();
         EventResource eventResource = new EventResource(event);
         eventResource.add(new Link("/docs/index.html#resources-events-get").withRel("profile"));
+
+        return ResponseEntity.ok(eventResource);
+    }
+
+    @PutMapping(value = "/{id}")
+    public ResponseEntity updateEvent(@PathVariable int id,
+                                      @RequestBody @Valid EventDto eventDto,
+                                      Errors errors) {
+        Optional<Event> eventOptional = this.eventRepository.findById(id);
+        if (!eventOptional.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (errors.hasErrors()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        this.eventValidator.validate(eventDto, errors);
+        if (errors.hasErrors()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        Event existingEvent = eventOptional.get();
+        this.modelMapper.map(eventDto, existingEvent);
+        EventResource eventResource = new EventResource(existingEvent);
+        eventResource.add(new Link("/docs/index.html#resources-events-update").withRel("profile"));
 
         return ResponseEntity.ok(eventResource);
     }

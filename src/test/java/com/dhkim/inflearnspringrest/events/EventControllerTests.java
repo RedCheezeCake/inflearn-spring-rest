@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -25,8 +26,7 @@ import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.li
 import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.links;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -47,6 +47,9 @@ public class EventControllerTests {
 
     @Autowired
     EventRepository eventRepository;
+
+    @Autowired
+    ModelMapper modelMapper;
 
 //    @MockBean
 //    EventRepository eventRepository;    // WebMvcTest 테스트이기 때문에 JPA 빈이 호출이 안됨
@@ -247,6 +250,113 @@ public class EventControllerTests {
         // TODO 문서화
         ;
     }
+
+
+    // --------------------------------------------------------
+    // 이벤트 수정 부분
+    // --------------------------------------------------------
+
+    // 존재하지 않는 이벤트 수정
+    @Test
+    public void updateNotExistEvent() throws Exception {
+        // Given
+        EventDto eventDto = EventDto.builder()
+                .name("Test Event")
+                .description("Test Event ")
+                .beginEnrollmentDateTime(LocalDateTime.of(2018, 12, 12, 20, 00))
+                .closeEnrollmentDateTime(LocalDateTime.of(2018, 12, 13, 20, 00))
+                .beginEventDateTime(LocalDateTime.of(2018, 12, 14, 20, 00))
+                .endEventDateTime(LocalDateTime.of(2018, 12, 15, 20, 00))
+                .basePrice(100)
+                .maxPrice(200)
+                .limitOfEnrollment(100)
+                .location("가능역")
+                .build();
+
+        // When & Then
+        this.mockMvc.perform(put("/api/events/333")
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(this.objectMapper.writeValueAsString(eventDto)))
+                .andDo(print())
+                .andExpect(status().isNotFound())     // 404 응답 확인
+        ;
+    }
+
+    // 로직에 맞지않는 값을 사용한 이벤트 수정
+    @Test
+    public void updateNotValidEvent() throws Exception {
+        // Given
+        Event event = generateEvent(1);
+        EventDto eventDto = EventDto.builder()
+                .name("Test Event")
+                .description("Test Event ")
+                .beginEnrollmentDateTime(LocalDateTime.of(2018, 12, 12, 20, 00))
+                .closeEnrollmentDateTime(LocalDateTime.of(2018, 12, 13, 20, 00))
+                .beginEventDateTime(LocalDateTime.of(2018, 12, 11, 20, 00))     // Not Valid
+                .endEventDateTime(LocalDateTime.of(2018, 12, 10, 20, 00))       // Not Valid
+                .basePrice(100)
+                .maxPrice(200)
+                .limitOfEnrollment(100)
+                .location("가능역")
+                .build();
+
+        // When & Then
+        this.mockMvc.perform(put("/api/events/{id}", event.getId())
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(this.objectMapper.writeValueAsString(eventDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())     // 400 응답 확인
+        ;
+    }
+
+    // 필수 값이 비어있는 이벤트 수정
+    @Test
+    public void updateBlinkEvent() throws Exception {
+        // Given
+        Event event = generateEvent(1);
+        EventDto eventDto = EventDto.builder()
+                .name("Test Event")
+                .description("Test Event ")
+                .beginEnrollmentDateTime(LocalDateTime.of(2018, 12, 12, 20, 00))
+                .closeEnrollmentDateTime(LocalDateTime.of(2018, 12, 13, 20, 00))
+                .basePrice(100)
+                .maxPrice(200)
+                .limitOfEnrollment(100)
+                .location("가능역")
+                .build();
+
+        // When & Then
+        this.mockMvc.perform(put("/api/events/{id}", event.getId())
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(this.objectMapper.writeValueAsString(eventDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())     // 400 응답 확인
+        ;
+    }
+
+    // 성공적인 이벤트 수정
+    @Test
+    public void updateEvent() throws Exception {
+        // Given
+        Event event = generateEvent(1);
+        EventDto eventDto = this.modelMapper.map(event, EventDto.class);
+        eventDto.setName("Updated Event");
+
+        // When & Then
+        this.mockMvc.perform(put("/api/events/{id}", event.getId())
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(this.objectMapper.writeValueAsString(eventDto)))
+                .andDo(print())
+                .andExpect(status().isOk())     // 정상적인 응답 확인
+                .andExpect(jsonPath("name").value(eventDto.getName()))  // 수정된 이벤트 이름 확인
+                .andExpect(jsonPath("_links.self").exists())            // HATEOAS
+                .andExpect(jsonPath("_links.profile").exists())         // self-description
+                .andDo(document("updateEvent"))     // 문서화
+                // TODO 문서화
+        ;
+
+    }
+
 
     private Event generateEvent(int i) {
         Event event = Event.builder()
